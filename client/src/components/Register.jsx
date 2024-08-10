@@ -1,9 +1,8 @@
 import { useState } from "react";
 import Axios from "axios";
-import "../App.css";
 import { baseUrl } from "../config";
 import { Link, useNavigate } from "react-router-dom";
-
+import styles from "../styles/Register.module.css"; // Import the CSS module
 
 function Register() {
   const [formFields, setFormFields] = useState({
@@ -12,28 +11,34 @@ function Register() {
     password: "",
   });
 
+  const [loading, setLoading] = useState(false);
+
   const navigate = useNavigate();
 
   const handleSubmit = (e) => {
+    setLoading(true);
     e.preventDefault();
-    // console.log(`${formFields.username}, ${formFields.email}`);
     Axios.post(`${baseUrl}/auth/signup`, {
       username: formFields.username,
       email: formFields.email,
       password: formFields.password,
-    }).then(res => {
-        if(res.data.status === 201){
-          navigate('/login');
-        }
-    }).catch(err => {
-        console.log(err);
     })
+      .then((res) => {
+        if (res.data.status) {
+          setLoading(false);
+          navigate("/login");
+        }
+      })
+      .catch((err) => {
+        setLoading(false);
+        console.log(err);
+      });
   };
 
   return (
-    <div className="sign-up-container">
+    <div className={styles["sign-up-container"]}>
       <h2>Sign Up</h2>
-      <form action="" className="sign-up-form" onSubmit={handleSubmit}>
+      <form className={styles["sign-up-form"]} onSubmit={handleSubmit}>
         <label htmlFor="username">Username: </label>
         <input
           type="text"
@@ -71,8 +76,16 @@ function Register() {
           }
         />
 
-        <button type="submit">Sign Up</button>
-        <p>Already have an account? <Link to="/login">Login</Link></p>
+        <button
+          type="submit"
+          disabled={loading}
+          className={styles["submit-button"]}
+        >
+          {loading ? <div className={styles["spinner"]}></div> : "Login"}
+        </button>
+        <p>
+          Already have an account? <Link to="/login">Login</Link>
+        </p>
       </form>
     </div>
   );
