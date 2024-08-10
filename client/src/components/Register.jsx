@@ -1,4 +1,3 @@
-/* eslint-disable no-unused-vars */
 import { useState } from "react";
 import Axios from "axios";
 import "../App.css";
@@ -23,7 +22,9 @@ function Register() {
       email: formFields.email,
       password: formFields.password,
     }).then(res => {
-        navigate('/login');
+        if(res.data.status === 201){
+          navigate('/login');
+        }
     }).catch(err => {
         console.log(err);
     })
@@ -71,7 +72,7 @@ function Register() {
         />
 
         <button type="submit">Sign Up</button>
-        <p>Already have an account? <Link to="/signup">Login</Link></p>
+        <p>Already have an account? <Link to="/login">Login</Link></p>
       </form>
     </div>
   );
