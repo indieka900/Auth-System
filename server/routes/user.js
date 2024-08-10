@@ -2,7 +2,7 @@ import express from "express";
 import bcrypt from "bcrypt";
 import { User } from "../models/User.js";
 import jwt from "jsonwebtoken";
-import nodemailer from 'nodemailer';
+import nodemailer from "nodemailer";
 
 const router = express.Router();
 
@@ -70,7 +70,7 @@ router.post("/forgot-password", async (req, res) => {
     });
 
     var transporter = nodemailer.createTransport({
-      host: 'smtp.gmail.com',
+      host: "smtp.gmail.com",
       port: 465,
       secure: true,
       auth: {
@@ -78,8 +78,6 @@ router.post("/forgot-password", async (req, res) => {
         pass: process.env.EMAIL_HOST_PASSWORD,
       },
     });
-    console.log("loading");
-    
 
     var mailOptions = {
       from: process.env.EMAIL_HOST_USER,
@@ -100,7 +98,26 @@ router.post("/forgot-password", async (req, res) => {
     });
   } catch (error) {
     console.error("Error in forgot-password route:", error);
-    res.status(500).json({ message: "Internal server error", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Internal server error", error: error.message });
+  }
+});
+
+router.post("/reset-password/:token", async (req, res) => {
+  const { token } = req.params;
+  const { password } = req.body;
+
+  try {
+    const hashPassword = await bcrypt.hash(password, 10);
+    const decode = await jwt.verify(token, process.env.KEY);
+    const id = decode.id;
+    await User.findByIdAndUpdate({_id: id}, {password: hashPassword});
+    return res.json({status: true, message: "Password updated successfully"});
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Internal server error", error: error.message });
   }
 });
 
