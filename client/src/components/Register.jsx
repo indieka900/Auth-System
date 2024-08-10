@@ -3,6 +3,7 @@ import Axios from "axios";
 import "../App.css";
 import { baseUrl } from "../config";
 
+
 function Register() {
   const [formFields, setFormFields] = useState({
     username: "",
@@ -13,9 +14,9 @@ function Register() {
   const handleSubmit = (e) => {
     e.preventDefault();
     // console.log(`${formFields.username}, ${formFields.email}`);
-    Axios.post(`${baseUrl}/auth/signUp`, {
+    Axios.post(`${baseUrl}/auth/signup`, {
       username: formFields.username,
-      emai: formFields.email,
+      email: formFields.email,
       password: formFields.password,
     }).then(res => {
         console.log(res);
