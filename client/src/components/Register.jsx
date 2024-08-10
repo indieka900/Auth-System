@@ -1,7 +1,9 @@
+/* eslint-disable no-unused-vars */
 import { useState } from "react";
 import Axios from "axios";
 import "../App.css";
 import { baseUrl } from "../config";
+import { Link, useNavigate } from "react-router-dom";
 
 
 function Register() {
@@ -11,6 +13,8 @@ function Register() {
     password: "",
   });
 
+  const navigate = useNavigate();
+
   const handleSubmit = (e) => {
     e.preventDefault();
     // console.log(`${formFields.username}, ${formFields.email}`);
@@ -19,7 +23,7 @@ function Register() {
       email: formFields.email,
       password: formFields.password,
     }).then(res => {
-        console.log(res);
+        navigate('/login');
     }).catch(err => {
         console.log(err);
     })
@@ -33,7 +37,6 @@ function Register() {
         <input
           type="text"
           placeholder="username"
-          value={formFields.username}
           onChange={(e) =>
             setFormFields((current) => ({
               ...current,
@@ -68,6 +71,7 @@ function Register() {
         />
 
         <button type="submit">Sign Up</button>
+        <p>Already have an account? <Link to="/signup">Login</Link></p>
       </form>
     </div>
   );
