@@ -1,33 +1,27 @@
+import styles from "../styles/Login.module.css";
 import { useState } from "react";
 import Axios from "axios";
-//
 import { baseUrl } from "../config";
 import { Link, useNavigate } from "react-router-dom";
-import styles from "../styles/Login.module.css";
 
-function Login() {
-  const [formFields, setFormFields] = useState({
-    email: "",
-    password: "",
-  });
+export default function ForgotPassword() {
+  const [email, setEmail] = useState("");
 
   const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
 
-  Axios.defaults.withCredentials = true;
-
   const handleSubmit = (e) => {
     e.preventDefault();
     setLoading(true);
-    Axios.post(`${baseUrl}/auth/login`, {
-      email: formFields.email,
-      password: formFields.password,
+    Axios.post(`${baseUrl}/auth/forgot-password`, {
+      email,
     })
       .then((res) => {
         setLoading(false);
         if (res.data.status) {
-          navigate("/");
+          alert("Check your email");
+          navigate("/login");
         }
       })
       .catch((err) => {
@@ -39,7 +33,7 @@ function Login() {
   return (
     <div className={styles["login-container"]}>
       <div className={styles["login-box"]}>
-        <h2 className={styles["login-header"]}>Login</h2>
+        <h2 className={styles["login-header"]}>Forgot Password</h2>
         <form onSubmit={handleSubmit} className={styles["login-form"]}>
           <div className={styles["form-group"]}>
             <label htmlFor="email" className={styles["form-label"]}>
@@ -49,31 +43,8 @@ function Login() {
               type="email"
               id="email"
               className={styles["form-input"]}
-              value={formFields.email}
-              onChange={(e) =>
-                setFormFields((current) => ({
-                  ...current,
-                  email: e.target.value,
-                }))
-              }
-              required
-            />
-          </div>
-          <div className={styles["form-group"]}>
-            <label htmlFor="password" className={styles["form-label"]}>
-              Password:
-            </label>
-            <input
-              type="password"
-              id="password"
-              className={styles["form-input"]}
-              value={formFields.password}
-              onChange={(e) =>
-                setFormFields((current) => ({
-                  ...current,
-                  password: e.target.value,
-                }))
-              }
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               required
             />
           </div>
@@ -82,7 +53,7 @@ function Login() {
             disabled={loading}
             className={styles["submit-button"]}
           >
-            {loading ? <div className={styles["spinner"]}></div> : "Login"}
+            {loading ? <div className={styles["spinner"]}></div> : "Submit"}
           </button>
         </form>
         <p className={styles["signup-link"]}>
@@ -96,5 +67,3 @@ function Login() {
     </div>
   );
 }
-
-export default Login;

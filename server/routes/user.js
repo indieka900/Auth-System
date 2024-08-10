@@ -2,6 +2,7 @@ import express from "express";
 import bcrypt from "bcrypt";
 import { User } from "../models/User.js";
 import jwt from "jsonwebtoken";
+import nodemailer from 'nodemailer';
 
 const router = express.Router();
 
@@ -54,6 +55,52 @@ router.post("/login", async (req, res) => {
     }
   } catch (error) {
     return res.status(500).json(error);
+  }
+});
+
+router.post("/forgot-password", async (req, res) => {
+  const { email } = req.body;
+  try {
+    const user = await User.findOne({ email });
+    if (!user) {
+      res.json({ message: "User with this email was not found" });
+    }
+    const token = jwt.sign({ id: user._id }, process.env.KEY, {
+      expiresIn: "5m",
+    });
+
+    var transporter = nodemailer.createTransport({
+      host: 'smtp.gmail.com',
+      port: 465,
+      secure: true,
+      auth: {
+        user: process.env.EMAIL_HOST_USER,
+        pass: process.env.EMAIL_HOST_PASSWORD,
+      },
+    });
+    console.log("loading");
+    
+
+    var mailOptions = {
+      from: process.env.EMAIL_HOST_USER,
+      to: user.email,
+      subject: "Reset password",
+      text: `http://localhost:5173/reset-password/${token}`,
+    };
+
+    transporter.sendMail(mailOptions, function (error, info) {
+      if (error) {
+        console.log(error);
+      } else {
+        return res.json({
+          status: true,
+          message: "Email sent, check your email",
+        });
+      }
+    });
+  } catch (error) {
+    console.error("Error in forgot-password route:", error);
+    res.status(500).json({ message: "Internal server error", error: error.message });
   }
 });
 
