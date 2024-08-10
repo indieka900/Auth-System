@@ -15,6 +15,7 @@ function Login() {
 
   const navigate = useNavigate();
 
+  Axios.defaults.withCredentials = true;
   const handleSubmit = (e) => {
     e.preventDefault();
     setLoading(true);
@@ -23,9 +24,7 @@ function Login() {
       password: formFields.password,
     }).then(res => {
         setLoading(false);
-        // console.log(res.data);
         if(res.data.status){
-            // console.log(res.data);
             navigate('/home');
           }
     }).catch(err => {
