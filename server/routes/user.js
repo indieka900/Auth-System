@@ -1,6 +1,7 @@
 import express from "express";
 import bcrypt from "bcrypt";
 import multer from 'multer';
+import fs from 'fs';
 import path from 'path';
 import { User } from "../models/User.js";
 import jwt from "jsonwebtoken";
@@ -17,7 +18,19 @@ const storage = multer.diskStorage({
   }
 });
 
-const upload = multer({ storage: storage });
+const upload = multer({ 
+  storage: storage,
+  fileFilter: function (req, file, cb) {
+    const filetypes = /jpeg|jpg|png|gif/;
+    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = filetypes.test(file.mimetype);
+    if (mimetype && extname) {
+      return cb(null, true);
+    } else {
+      cb('Error: Images Only!');
+    }
+  }
+});
 
 router.post("/signup", async (req, res) => {
   const { username, email, password } = req.body;
@@ -151,24 +164,32 @@ router.put("/update-user/:token", upload.single('profilePicture'), async (req, r
       lastName
     };
 
+    const user = await User.findById(id);
+    if (!user) {
+      return res.status(404).json({ status: false, message: "User not found" });
+    }
+
     // If a file was uploaded, add the file path to the update data
     if (req.file) {
+      // Delete the old profile picture if it exists
+      if (user.profilePicture) {
+        const oldFilePath = path.join(__dirname, '..', user.profilePicture);
+        if (fs.existsSync(oldFilePath)) {
+          fs.unlinkSync(oldFilePath);
+        }
+      }
       updateData.profilePicture = `/uploads/${req.file.filename}`;
     }
 
-    const user = await User.findByIdAndUpdate(
+    const updatedUser = await User.findByIdAndUpdate(
       { _id: id },
       updateData,
       { new: true } // This option returns the updated document
     );
 
-    if (!user) {
-      return res.status(404).json({ status: false, message: "User not found" });
-    }
-
     return res
       .status(200)
-      .json({ status: true, message: "User updated successfully", user: user });
+      .json({ status: true, message: "User updated successfully", user: updatedUser });
   } catch (error) {
     if (error instanceof jwt.JsonWebTokenError) {
       return res.status(401).json({ message: "Invalid token" });
@@ -178,5 +199,4 @@ router.put("/update-user/:token", upload.single('profilePicture'), async (req, r
       .json({ message: "Internal server error", error: error.message });
   }
 });
-
 export { router as UserRouter };
