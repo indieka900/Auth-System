@@ -37,7 +37,7 @@ export default function ResetPassword() {
         <form onSubmit={handleSubmit} className={styles["login-form"]}>
           <div className={styles["form-group"]}>
             <label htmlFor="email" className={styles["form-label"]}>
-              Password:
+              New Password:
             </label>
             <input
               type="password"

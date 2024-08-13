@@ -41,7 +41,7 @@ router.post("/login", async (req, res) => {
         return res.status(400).json({ message: "Password is incorrect" });
       }
 
-      const token = jwt.sign({ username: user.username }, process.env.KEY, {
+      const token = jwt.sign({ username: user.username, id: user._id }, process.env.KEY, {
         expiresIn: "1h",
       });
       res.cookie("token", token, { httpOnly: true, maxAge: 360000 });
@@ -114,6 +114,20 @@ router.post("/reset-password/:token", async (req, res) => {
     const id = decode.id;
     await User.findByIdAndUpdate({_id: id}, {password: hashPassword});
     return res.json({status: true, message: "Password updated successfully"});
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Internal server error", error: error.message });
+  }
+});
+
+router.put("/update-user/:token", async (req, res) => {
+  const { token } = req.params;
+  const { firstName, lastName} = req.body;
+
+  try {
+
+    
   } catch (error) {
     res
       .status(500)
