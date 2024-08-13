@@ -1,10 +1,23 @@
 import express from "express";
 import bcrypt from "bcrypt";
+import multer from 'multer';
+import path from 'path';
 import { User } from "../models/User.js";
 import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
 
 const router = express.Router();
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'uploads/') // Make sure this directory exists
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + path.extname(file.originalname))
+  }
+});
+
+const upload = multer({ storage: storage });
 
 router.post("/signup", async (req, res) => {
   const { username, email, password } = req.body;
@@ -41,9 +54,13 @@ router.post("/login", async (req, res) => {
         return res.status(400).json({ message: "Password is incorrect" });
       }
 
-      const token = jwt.sign({ username: user.username, id: user._id }, process.env.KEY, {
-        expiresIn: "1h",
-      });
+      const token = jwt.sign(
+        { username: user.username, id: user._id },
+        process.env.KEY,
+        {
+          expiresIn: "1h",
+        }
+      );
       res.cookie("token", token, { httpOnly: true, maxAge: 360000 });
       return res
         .status(200)
@@ -112,8 +129,8 @@ router.post("/reset-password/:token", async (req, res) => {
     const hashPassword = await bcrypt.hash(password, 10);
     const decode = await jwt.verify(token, process.env.KEY);
     const id = decode.id;
-    await User.findByIdAndUpdate({_id: id}, {password: hashPassword});
-    return res.json({status: true, message: "Password updated successfully"});
+    await User.findByIdAndUpdate({ _id: id }, { password: hashPassword });
+    return res.json({ status: true, message: "Password updated successfully" });
   } catch (error) {
     res
       .status(500)
@@ -121,14 +138,41 @@ router.post("/reset-password/:token", async (req, res) => {
   }
 });
 
-router.put("/update-user/:token", async (req, res) => {
+router.put("/update-user/:token", upload.single('profilePicture'), async (req, res) => {
   const { token } = req.params;
-  const { firstName, lastName} = req.body;
+  const { firstName, lastName } = req.body;
 
   try {
+    const decode = await jwt.verify(token, process.env.KEY);
+    const id = decode.id;
 
-    
+    let updateData = {
+      firstName,
+      lastName
+    };
+
+    // If a file was uploaded, add the file path to the update data
+    if (req.file) {
+      updateData.profilePicture = `/uploads/${req.file.filename}`;
+    }
+
+    const user = await User.findByIdAndUpdate(
+      { _id: id },
+      updateData,
+      { new: true } // This option returns the updated document
+    );
+
+    if (!user) {
+      return res.status(404).json({ status: false, message: "User not found" });
+    }
+
+    return res
+      .status(200)
+      .json({ status: true, message: "User updated successfully", user: user });
   } catch (error) {
+    if (error instanceof jwt.JsonWebTokenError) {
+      return res.status(401).json({ message: "Invalid token" });
+    }
     res
       .status(500)
       .json({ message: "Internal server error", error: error.message });
